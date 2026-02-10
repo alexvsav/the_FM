@@ -13,7 +13,7 @@ import {
   limitToLast 
 } from 'firebase/database';
 
-// Firebase configuration - REPLACE WITH YOUR ACTUAL VALUES
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyA58NkMScdRYNUXlPyUUJmZX7w2OM0njtY",
   authDomain: "the-fm-95adb.firebaseapp.com",
@@ -23,6 +23,7 @@ const firebaseConfig = {
   messagingSenderId: "1075997758557",
   appId: "1:1075997758557:web:050e9e26795006ae2069b4",
   measurementId: "G-PMWCM1HZVL"
+};
 
 // Initialize Firebase
 let app, database;
