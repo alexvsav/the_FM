@@ -15,14 +15,14 @@ import {
 
 // Firebase configuration - REPLACE WITH YOUR ACTUAL VALUES
 const firebaseConfig = {
-  apiKey: "AIzaSyDemoKey-ReplaceWithYourActualKey",
-  authDomain: "fuck-map.firebaseapp.com",
-  databaseURL: "https://fuck-map-default-rtdb.firebaseio.com",
-  projectId: "fuck-map",
-  storageBucket: "fuck-map.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
-};
+  apiKey: "AIzaSyA58NkMScdRYNUXlPyUUJmZX7w2OM0njtY",
+  authDomain: "the-fm-95adb.firebaseapp.com",
+  databaseURL: "https://the-fm-95adb-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "the-fm-95adb",
+  storageBucket: "the-fm-95adb.firebasestorage.app",
+  messagingSenderId: "1075997758557",
+  appId: "1:1075997758557:web:050e9e26795006ae2069b4",
+  measurementId: "G-PMWCM1HZVL"
 
 // Initialize Firebase
 let app, database;
