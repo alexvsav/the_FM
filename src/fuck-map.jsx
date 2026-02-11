@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Share2, Trophy, MapPin, Info, X, RotateCcw, AlertTriangle, Instagram } from 'lucide-react';
+import { BLOG_POSTS, PRIVACY_POLICY } from './blogData.js';
 
 // Firebase imports
 import { initializeApp } from 'firebase/app';
@@ -13,16 +14,15 @@ import {
   limitToLast 
 } from 'firebase/database';
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration - REPLACE WITH YOUR ACTUAL VALUES
 const firebaseConfig = {
-  apiKey: "AIzaSyA58NkMScdRYNUXlPyUUJmZX7w2OM0njtY",
-  authDomain: "the-fm-95adb.firebaseapp.com",
-  databaseURL: "https://the-fm-95adb-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "the-fm-95adb",
-  storageBucket: "the-fm-95adb.firebasestorage.app",
-  messagingSenderId: "1075997758557",
-  appId: "1:1075997758557:web:050e9e26795006ae2069b4",
-  measurementId: "G-PMWCM1HZVL"
+  apiKey: "AIzaSyDemoKey-ReplaceWithYourActualKey",
+  authDomain: "fuck-map.firebaseapp.com",
+  databaseURL: "https://fuck-map-default-rtdb.firebaseio.com",
+  projectId: "fuck-map",
+  storageBucket: "fuck-map.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
 };
 
 // Initialize Firebase
@@ -169,6 +169,7 @@ export default function FuckMap() {
   const [countryPosition, setCountryPosition] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showLeaderboardView, setShowLeaderboardView] = useState(false);
+  const [selectedBlogPost, setSelectedBlogPost] = useState(null);
 
   // Load data from localStorage
   useEffect(() => {
@@ -220,11 +221,15 @@ export default function FuckMap() {
   };
 
   const saveData = async (countries, info) => {
+    console.log('saveData called with:', { countries: countries.size, info });
+    
     let score = 0;
     countries.forEach(country => {
       const pop = COUNTRY_DATA[country] || 1;
       score += calculateScore(pop);
     });
+    
+    console.log('Calculated score:', score);
     
     const data = {
       countries: Array.from(countries),
@@ -234,10 +239,13 @@ export default function FuckMap() {
     };
     
     localStorage.setItem('fuckMapData', JSON.stringify(data));
+    console.log('Saved to localStorage');
     
     if (database && info?.username) {
       try {
         const userRef = ref(database, 'users/' + info.username.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+        console.log('Attempting to save to Firebase at path:', 'users/' + info.username.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+        
         await set(userRef, {
           username: info.username,
           citizenship: info.citizenship,
@@ -245,12 +253,18 @@ export default function FuckMap() {
           countryCount: countries.size,
           timestamp: Date.now()
         });
+        
+        console.log('✅ Data saved to Firebase successfully');
       } catch (error) {
-        console.error('Firebase save error:', error);
+        console.error('❌ Firebase save error:', error);
+        alert('Firebase error: ' + error.message);
       }
+    } else {
+      console.warn('Database not initialized or no username');
     }
     
     updateLeaderboard(data);
+    console.log('Leaderboard updated');
   };
 
   const loadLeaderboard = async () => {
@@ -304,14 +318,21 @@ export default function FuckMap() {
       newSelected.add(country);
     }
     setSelectedCountries(newSelected);
-    calculateTotalScore(newSelected);
+    
+    // Calculate score immediately
+    let newScore = 0;
+    newSelected.forEach(c => {
+      const pop = COUNTRY_DATA[c] || 1;
+      newScore += calculateScore(pop);
+    });
+    setTotalScore(newScore);
     setHasUnsavedChanges(true);
     
-    // Save to localStorage for backup but don't submit to leaderboard yet
+    // Save to localStorage for backup
     const data = {
       countries: Array.from(newSelected),
       userInfo: userInfo,
-      score: totalScore,
+      score: newScore,
       timestamp: Date.now()
     };
     localStorage.setItem('fuckMapData', JSON.stringify(data));
@@ -363,12 +384,29 @@ export default function FuckMap() {
   };
 
   const handleSaveAndViewLeaderboard = async () => {
-    if (userInfo && selectedCountries.size > 0) {
+    console.log('Save button clicked');
+    console.log('Selected countries:', selectedCountries.size);
+    console.log('User info:', userInfo);
+    console.log('Total score:', totalScore);
+    
+    if (!userInfo) {
+      alert('Error: User info not found. Please refresh and try again.');
+      return;
+    }
+    
+    if (selectedCountries.size === 0) {
+      alert('Please select at least one country before viewing the leaderboard!');
+      return;
+    }
+    
+    try {
       await saveData(selectedCountries, userInfo);
+      console.log('Data saved successfully');
       setHasUnsavedChanges(false);
       setShowLeaderboardView(true);
-    } else if (selectedCountries.size === 0) {
-      alert('Please select at least one country before viewing the leaderboard!');
+    } catch (error) {
+      console.error('Error saving data:', error);
+      alert('Failed to save data. Check console for details.');
     }
   };
 
@@ -576,6 +614,7 @@ export default function FuckMap() {
               <button onClick={() => setCurrentPage('map')} style={{color: phColors.textGray}}>Map</button>
               <button style={{color: phColors.accent}} className="font-semibold">About</button>
               <button onClick={() => setCurrentPage('blog')} style={{color: phColors.textGray}}>Blog</button>
+              <button onClick={() => setCurrentPage('privacy')} style={{color: phColors.textGray}}>Privacy</button>
             </div>
           </div>
         </div>
@@ -684,11 +723,79 @@ export default function FuckMap() {
 
   // Blog Page
   if (currentPage === 'blog') {
+    // If specific post selected, show full article
+    if (selectedBlogPost) {
+      const post = BLOG_POSTS.find(p => p.id === selectedBlogPost);
+      
+      return (
+        <div className="min-h-screen" style={{backgroundColor: phColors.bg, fontFamily: 'Montserrat, sans-serif'}}>
+          <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet" />
+          
+          <div className="border-b sticky top-0 z-10" style={{backgroundColor: phColors.bgCard, borderColor: phColors.border}}>
+            <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+              <button onClick={() => setCurrentPage('map')} className="text-2xl font-bold transition" style={{color: phColors.accent}}>
+                The F*** Map
+              </button>
+              <div className="flex gap-4">
+                <button onClick={() => setCurrentPage('map')} style={{color: phColors.textGray}}>Map</button>
+                <button onClick={() => setCurrentPage('about')} style={{color: phColors.textGray}}>About</button>
+                <button onClick={() => { setSelectedBlogPost(null); }} style={{color: phColors.accent}} className="font-semibold">Blog</button>
+                <button onClick={() => setCurrentPage('privacy')} style={{color: phColors.textGray}}>Privacy</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-4xl mx-auto px-4 py-12">
+            <button 
+              onClick={() => setSelectedBlogPost(null)}
+              className="mb-6 transition font-semibold text-lg"
+              style={{color: phColors.accent}}
+            >
+              ← Back to Blog
+            </button>
+            
+            <article className="rounded-3xl p-8 shadow-xl" style={{backgroundColor: phColors.bgCard, border: `1px solid ${phColors.border}`}}>
+              <div className="mb-6">
+                <h1 className="text-4xl font-bold mb-4" style={{color: phColors.text}}>{post.title}</h1>
+                <div className="flex gap-4 text-sm" style={{color: phColors.textGray}}>
+                  <span>{post.date}</span>
+                  <span>•</span>
+                  <span>{post.readTime}</span>
+                </div>
+              </div>
+              
+              <div 
+                className="leading-relaxed text-lg"
+                style={{color: phColors.textGray, whiteSpace: 'pre-wrap'}}
+              >
+                {post.content}
+              </div>
+              
+              <div className="mt-8 pt-8 border-t" style={{borderColor: phColors.border}}>
+                <p style={{color: phColors.textGray}} className="text-sm mb-4">
+                  Enjoyed this article? Calculate your own F*** Map score!
+                </p>
+                <button
+                  onClick={() => { setSelectedBlogPost(null); setCurrentPage('map'); }}
+                  className="px-6 py-3 rounded-xl font-bold transition shadow-lg"
+                  style={{backgroundColor: phColors.accent, color: phColors.bg}}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = phColors.accentHover}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = phColors.accent}
+                >
+                  Go to Map
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
+      );
+    }
+    
+    // Blog listing page
     return (
       <div className="min-h-screen" style={{backgroundColor: phColors.bg, fontFamily: 'Montserrat, sans-serif'}}>
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet" />
         
-        {/* Header */}
         <div className="border-b sticky top-0 z-10" style={{backgroundColor: phColors.bgCard, borderColor: phColors.border}}>
           <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
             <button onClick={() => setCurrentPage('map')} className="text-2xl font-bold transition" style={{color: phColors.accent}}>
@@ -698,42 +805,73 @@ export default function FuckMap() {
               <button onClick={() => setCurrentPage('map')} style={{color: phColors.textGray}}>Map</button>
               <button onClick={() => setCurrentPage('about')} style={{color: phColors.textGray}}>About</button>
               <button style={{color: phColors.accent}} className="font-semibold">Blog</button>
+              <button onClick={() => setCurrentPage('privacy')} style={{color: phColors.textGray}}>Privacy</button>
             </div>
           </div>
         </div>
 
-        {/* Content */}
         <div className="max-w-4xl mx-auto px-4 py-12">
           <h1 className="text-5xl font-bold mb-6" style={{color: phColors.text}}>Blog</h1>
+          <p className="text-xl mb-12" style={{color: phColors.textGray}}>
+            Data-driven insights about international sexual culture and geography
+          </p>
           
-          <div className="rounded-3xl p-8 mb-6 shadow-xl hover:border-opacity-100 transition cursor-pointer" style={{backgroundColor: phColors.bgCard, border: `1px solid ${phColors.border}`}}>
-            <h2 className="text-2xl font-bold mb-3" style={{color: phColors.text}}>Welcome to The F*** Map</h2>
-            <p className="text-sm mb-4" style={{color: phColors.textGray}}>January 15, 2024</p>
-            <p className="leading-relaxed" style={{color: phColors.textGray}}>
-              We're launching The F*** Map - a bold, unapologetic platform for tracking your international 
-              sexual experiences. No euphemisms, no pretending this is about "travel" or "friendships." 
-              This is exactly what it sounds like, and we're not ashamed of it.
-            </p>
+          <div className="space-y-6">
+            {BLOG_POSTS.map(post => (
+              <div 
+                key={post.id}
+                onClick={() => setSelectedBlogPost(post.id)}
+                className="rounded-3xl p-8 shadow-xl transition cursor-pointer"
+                style={{backgroundColor: phColors.bgCard, border: `1px solid ${phColors.border}`}}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = phColors.accent}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = phColors.border}
+              >
+                <h2 className="text-2xl font-bold mb-3" style={{color: phColors.text}}>{post.title}</h2>
+                <div className="flex gap-3 text-sm mb-4" style={{color: phColors.textGray}}>
+                  <span>{post.date}</span>
+                  <span>•</span>
+                  <span>{post.readTime}</span>
+                </div>
+                <p className="leading-relaxed mb-4" style={{color: phColors.textGray}}>
+                  {post.excerpt}
+                </p>
+                <span className="font-semibold" style={{color: phColors.accent}}>
+                  Read more →
+                </span>
+              </div>
+            ))}
           </div>
+        </div>
+      </div>
+    );
+  }
 
-          <div className="rounded-3xl p-8 mb-6 shadow-xl hover:border-opacity-100 transition cursor-pointer" style={{backgroundColor: phColors.bgCard, border: `1px solid ${phColors.border}`}}>
-            <h2 className="text-2xl font-bold mb-3" style={{color: phColors.text}}>How to Increase Your Score</h2>
-            <p className="text-sm mb-4" style={{color: phColors.textGray}}>January 10, 2024</p>
-            <p className="leading-relaxed" style={{color: phColors.textGray}}>
-              Want to top the leaderboards? Small countries = big points. Focus on rare citizenships like 
-              Vatican City (50 points!), Nauru, Tuvalu, and other micro-nations. Or go for quantity with 
-              the major population centers.
-            </p>
+  // Privacy Policy Page
+  if (currentPage === 'privacy') {
+    return (
+      <div className="min-h-screen" style={{backgroundColor: phColors.bg, fontFamily: 'Montserrat, sans-serif'}}>
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet" />
+        
+        <div className="border-b sticky top-0 z-10" style={{backgroundColor: phColors.bgCard, borderColor: phColors.border}}>
+          <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <button onClick={() => setCurrentPage('map')} className="text-2xl font-bold transition" style={{color: phColors.accent}}>
+              The F*** Map
+            </button>
+            <div className="flex gap-4">
+              <button onClick={() => setCurrentPage('map')} style={{color: phColors.textGray}}>Map</button>
+              <button onClick={() => setCurrentPage('about')} style={{color: phColors.textGray}}>About</button>
+              <button onClick={() => setCurrentPage('blog')} style={{color: phColors.textGray}}>Blog</button>
+              <button style={{color: phColors.accent}} className="font-semibold">Privacy</button>
+            </div>
           </div>
+        </div>
 
-          <div className="rounded-3xl p-8 shadow-xl hover:border-opacity-100 transition cursor-pointer" style={{backgroundColor: phColors.bgCard, border: `1px solid ${phColors.border}`}}>
-            <h2 className="text-2xl font-bold mb-3" style={{color: phColors.text}}>Safety First: Our Community Guidelines</h2>
-            <p className="text-sm mb-4" style={{color: phColors.textGray}}>January 5, 2024</p>
-            <p className="leading-relaxed" style={{color: phColors.textGray}}>
-              While we celebrate sexual freedom, we take safety seriously. Always practice safe sex, 
-              get tested regularly, and most importantly - respect consent. This is about mutual adult 
-              experiences, not conquests over people.
-            </p>
+        <div className="max-w-4xl mx-auto px-4 py-12">
+          <div 
+            className="leading-relaxed text-lg rounded-3xl p-8 shadow-xl"
+            style={{backgroundColor: phColors.bgCard, color: phColors.textGray, whiteSpace: 'pre-wrap', border: `1px solid ${phColors.border}`}}
+          >
+            {PRIVACY_POLICY}
           </div>
         </div>
       </div>
@@ -759,6 +897,7 @@ export default function FuckMap() {
               <button style={{color: phColors.accent}} className="font-semibold">Map</button>
               <button onClick={() => setCurrentPage('about')} style={{color: phColors.textGray}}>About</button>
               <button onClick={() => setCurrentPage('blog')} style={{color: phColors.textGray}}>Blog</button>
+              <button onClick={() => setCurrentPage('privacy')} style={{color: phColors.textGray}}>Privacy</button>
             </div>
           </div>
           <div className="flex items-center gap-4">
