@@ -328,8 +328,8 @@ Island geography creates unique sexual dynamics through psychology, proximity, a
 4. Indonesia Tourism Board - Visitor Survey (2023)
 5. "Sexual Geography of Small Island Developing States" - Global Health Studies (2024)
     `
-  }
-];
+  },
+
 
 {
   id: 4,
@@ -2694,7 +2694,7 @@ Target countries that are:
 3. "The Economics of Dating Markets" - Journal of Economic Behavior (2024)
 `
 }
-
+];
 
 // Add 17 more blog posts following the same structure...
 // (I'll create placeholder entries for now, you can expand them later)
