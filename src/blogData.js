@@ -2699,17 +2699,7 @@ Target countries that are:
 // Add 17 more blog posts following the same structure...
 // (I'll create placeholder entries for now, you can expand them later)
 
-for (let i = 4; i <= 20; i++) {
-  BLOG_POSTS.push({
-    id: i,
-    slug: `blog-post-${i}`,
-    title: `Blog Post ${i} - Coming Soon`,
-    date: 'February 2026',
-    excerpt: 'This post is being written. Check back soon for more data-driven insights about international sexual culture.',
-    readTime: '5 min read',
-    content: '# Coming Soon\n\nThis article is currently being written. Check back soon!'
-  });
-}
+
 
 export const PRIVACY_POLICY = `
 # Privacy Policy for The F*** Map
