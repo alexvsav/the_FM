@@ -1,0 +1,63 @@
+# robots.txt for thefuckmap.com
+# Optimized for maximum search engine indexing
+# Last updated: February 16, 2026
+
+# Allow all major search engines full access
+User-agent: *
+Allow: /
+Allow: /blog/
+Allow: /about
+Allow: /privacy
+
+# Disallow only truly private/functional paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/static/
+Disallow: /node_modules/
+
+# Allow specific important bots explicitly
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+User-agent: Sogou
+Allow: /
+
+# Block bad bots that waste resources
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: BLEXBot
+Disallow: /
+
+# Sitemap location (main sitemap)
+Sitemap: https://thefuckmap.com/sitemap.xml
+
+# No crawl delay for major search engines
+# (Vercel can handle the traffic, and we want fast indexing)
